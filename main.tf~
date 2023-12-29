@@ -121,15 +121,6 @@ resource "google_cloud_run_service" "hyp_run_service_data_processing" {
   depends_on = [google_project_service.run]
 }
 
-data "google_iam_policy" "noauth" {
-  binding {
-    role = "roles/run.invoker"
-    members = [
-      "allUsers",
-    ]
-  }
-}
-
 resource "google_cloud_run_service_iam_policy" "noauth_dp" {
   location    = google_cloud_run_service.hyp_run_service_data_processing.location
   project     = google_cloud_run_service.hyp_run_service_data_processing.project
