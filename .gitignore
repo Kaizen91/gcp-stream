@@ -38,3 +38,6 @@ event-stream-409218-65ebaf6386c5.json
 
 #ignore virtual environments
 venv
+
+#ignore vim backups
+*~
