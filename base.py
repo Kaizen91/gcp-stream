@@ -6,7 +6,7 @@ import datetime
 from google.cloud import pubsub_v1
 
 # TODO(developer)
-project_id = os.environ["GCP_PROJECT_NUMBER"]
+project_id = os.environ["GCP_PROJECT"]
 topic_id = os.environ["GCP_TOPIC_ID"]
 publisher = pubsub_v1.PublisherClient()
 # The `topic_path` method creates a fully qualified identifier
