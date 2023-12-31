@@ -30,6 +30,12 @@
     "description": "uri where the event occured"
   },
   {
+    "name": "event_date",
+    "type": "DATETIME",
+    "mode": "NULLABLE",
+    "description": "date when the event occured"
+  },
+  {
     "name": "event_type",
     "type": "STRING",
     "mode": "NULLABLE",

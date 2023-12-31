@@ -181,15 +181,15 @@ data "google_iam_policy" "noauth" {
    #policy_data = data.google_iam_policy.noauth.policy_data
  #}
 
-resource "google_bigquery_table" "bq_table_cloud_run" {
-  dataset_id = google_bigquery_dataset.bq_dataset.dataset_id
-  table_id   = "cloud_run"
-  deletion_protection = false
-
-  labels = {
-    env = "default"
-  }
-
-  schema = file("bq-table-cloud-run-schema.json") 
-
-}
+ resource "google_bigquery_table" "bq_table_cloud_run" {
+ dataset_id = google_bigquery_dataset.bq_dataset.dataset_id
+ table_id   = "cloud_run"
+ deletion_protection = false
+ 
+ labels = {
+ env = "default"
+ }
+ 
+ schema = file("bq-table-cloud-run-schema.json") 
+ 
+ }
