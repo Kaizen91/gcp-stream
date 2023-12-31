@@ -2,7 +2,6 @@ terraform {
   required_providers {
     google = {
       source = "hashicorp/google"
-      version = "4.32.0"
     }
   }
 }
@@ -10,10 +9,19 @@ terraform {
 provider "google" {
   project = var.project_id
   region  = var.gcp_region
+  credentials = file("event-stream-409218-65ebaf6386c5.json")
 }
 
 # Enabling Service accounts
 data "google_compute_default_service_account" "default" {
+}
+
+data "google_project" "project" {
+}
+
+resource "google_service_account" "sa" {
+  account_id   = "cloud-run-pubsub-invoker"
+  display_name = "Cloud Run Pub/Sub Invoker"
 }
 
 resource "google_project_iam_member" "gce_pub_sub_admin" {
@@ -46,6 +54,11 @@ resource "google_project_service" "pubsub" {
   disable_on_destroy = false
 }
 
+# resource "google_project_service" "cloudrun_api" {
+# service = "cloudrun.googleapis.com"
+# disable_on_destroy = "false"
+# }
+
 # BigQuery Dataset
 resource "google_bigquery_dataset" "bq_dataset" {
   dataset_id                  = "ecommerce_sink"
@@ -71,54 +84,85 @@ resource "google_pubsub_topic" "ps_topic" {
   # depends_on = [google_project_service.pubsub]
 }
 
-resource "google_pubsub_subscription" "hyp_sub_cloud_run" {
-  name  = "hyp_subscription_cloud_run"
+output "pubsub_topic" {
+  value = google_pubsub_topic.ps_topic.name
+}
+
+
+ # resource "google_pubsub_subscription" "hyp_sub_cloud_run" {
+   # name  = "hyp_subscription_cloud_run"
+   # topic = google_pubsub_topic.ps_topic.name
+ # 
+   # labels = {
+     # created = "terraform"
+   # }
+ # 
+   # push_config {
+     # push_endpoint = google_cloud_run_service.default.status[0].url
+ # 
+     # attributes = {
+       # x-goog-version = "v1"
+     # }
+   # }
+ # 
+   # retain_acked_messages      = false
+ # 
+   # ack_deadline_seconds = 20
+ # 
+ # 
+   # retry_policy {
+     # minimum_backoff = "10s"
+   # }
+ # 
+   # enable_message_ordering    = false
+ # }
+
+resource "google_cloud_run_service_iam_binding" "binding" {
+  location = google_cloud_run_v2_service.default.location
+  service  = google_cloud_run_v2_service.default.name
+  role     = "roles/run.invoker"
+  members  = ["serviceAccount:${google_service_account.sa.email}"]
+}
+
+resource "google_project_service_identity" "pubsub_agent" {
+  provider = google-beta
+  project  = data.google_project.project.project_id
+  service  = "pubsub.googleapis.com"
+}
+
+resource "google_project_iam_binding" "project_token_creator" {
+  project = data.google_project.project.project_id
+  role    = "roles/iam.serviceAccountTokenCreator"
+  members = ["serviceAccount:${google_project_service_identity.pubsub_agent.email}"]
+}
+
+resource "google_pubsub_subscription" "subscription" {
+  name  = "pubsub_subscription"
   topic = google_pubsub_topic.ps_topic.name
-
-  labels = {
-    created = "terraform"
-  }
-
   push_config {
-    push_endpoint = google_cloud_run_service.hyp_run_service_data_processing.status[0].url
-
+    push_endpoint = google_cloud_run_v2_service.default.uri
+    oidc_token {
+      service_account_email = google_service_account.sa.email
+    }
     attributes = {
       x-goog-version = "v1"
     }
   }
-
-  retain_acked_messages      = false
-
-  ack_deadline_seconds = 20
-
-
-  retry_policy {
-    minimum_backoff = "10s"
-  }
-
-  enable_message_ordering    = false
+   depends_on = [google_cloud_run_v2_service.default]
 }
 
 # Cloud Run
-resource "google_cloud_run_service" "hyp_run_service_data_processing" {
+resource "google_cloud_run_v2_service" "default" {
   name     = "hyp-run-service-data-processing"
   location = var.gcp_region
 
   template {
-    spec {
       containers {
-        image = "gcr.io/${var.project_id}/data-processing-service" # TODO: need to create this image
-      }
-      service_account_name = "${google_service_account.data_pipeline_access.email}"
+        image = "gcr.io/${var.project_id}/pubsub"
     }
   }
 
-  traffic {
-    percent         = 100
-    latest_revision = true
-  }
-
-  depends_on = [google_project_service.run]
+  # depends_on = [google_project_service.cloudrun_api]
 }
 
 data "google_iam_policy" "noauth" {
@@ -130,27 +174,22 @@ data "google_iam_policy" "noauth" {
   }
 }
 
-resource "google_cloud_run_service_iam_policy" "noauth_dp" {
-  location    = google_cloud_run_service.hyp_run_service_data_processing.location
-  project     = google_cloud_run_service.hyp_run_service_data_processing.project
-  service     = google_cloud_run_service.hyp_run_service_data_processing.name
-  policy_data = data.google_iam_policy.noauth.policy_data
-}
+ #resource "google_cloud_run_service_iam_policy" "noauth_dp" {
+   #location    = google_cloud_run_service.hyp_run_service_data_processing.location
+   #project     = google_cloud_run_service.hyp_run_service_data_processing.project
+   #service     = google_cloud_run_service.hyp_run_service_data_processing.name
+   #policy_data = data.google_iam_policy.noauth.policy_data
+ #}
 
 resource "google_bigquery_table" "bq_table_cloud_run" {
   dataset_id = google_bigquery_dataset.bq_dataset.dataset_id
   table_id   = "cloud_run"
   deletion_protection = false
 
-  time_partitioning {
-    type = "DAY"
-    field = "event_datetime"
-  }
-
   labels = {
     env = "default"
   }
 
-  schema = file("./datalayer/ecommerce_events_bq_schema.json")  # TODO: update schema and file location
+  schema = file("bq-table-cloud-run-schema.json") 
 
 }

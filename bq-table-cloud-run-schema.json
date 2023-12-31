@@ -16,7 +16,8 @@
     "type": "STRING",
     "mode": "REQUIRED",
     "description": "unique id for the session"
-  }{
+  },
+  {
     "name": "browser",
     "type": "STRING",
     "mode": "NULLABLE",
