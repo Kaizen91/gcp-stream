@@ -36,6 +36,12 @@
     "description": "date when the event occured"
   },
   {
+    "name": "weekday",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "day of the week when the event occured"
+  },
+  {
     "name": "event_type",
     "type": "STRING",
     "mode": "NULLABLE",

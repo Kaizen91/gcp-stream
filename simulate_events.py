@@ -14,7 +14,7 @@ publisher = pubsub_v1.PublisherClient()
 topic_path = publisher.topic_path(project_id, topic_id)
 print(topic_path)
 
-data = json.load(open("./data_stream/events.json", 'r'))
+data = json.load(open("./data/events.json", 'r'))
 for row in data:
     now = datetime.datetime.now()
     row['event_date'] = now.strftime("%Y-%m-%d %H:%M:%S")

@@ -1,4 +1,5 @@
 import os
+import datetime
 import time
 import base64
 import json
@@ -35,7 +36,7 @@ def index():
 
     record = base64.b64decode(ps_message["data"]).decode("utf-8").strip()
     record = json.loads(record)
-
+    record["weekday"] = datetime.datetime.strptime(record["event_date"], "%Y-%m-%d %H:%M:%S").strftime('%A')
     print(record)
     print(type(record))
 

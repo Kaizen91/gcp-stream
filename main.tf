@@ -148,3 +148,81 @@ resource "google_bigquery_table" "bq_table_cloud_run" {
   schema = file("bq-table-cloud-run-schema.json")
 
 }
+
+#Create other tables to be referenced in transformations
+# not needed for this project keeping for reference on future projects
+# resource "google_storage_bucket" "default" {
+# name          = "example_ps_cloudrun_configuration_bucket"
+# location      = var.gcp_region
+# force_destroy = true
+# }
+# 
+# resource "google_storage_bucket_object" "orders" {
+# name         = "order_items.csv"
+# content_type = "csv"
+# source       = "data/order_items.csv"
+# bucket       = google_storage_bucket.default.id
+# }
+# 
+# resource "google_bigquery_table" "orders" {
+# dataset_id          = google_bigquery_dataset.bq_dataset.dataset_id
+# table_id            = "order_items"
+# deletion_protection = false
+# 
+# labels = {
+# env = "default"
+# }
+# 
+# external_data_configuration {
+# autodetect = true
+# source_uris = ["gs://${google_storage_bucket.default.name}/${google_storage_bucket_object.orders.name}"]
+# source_format = "CSV"
+# }
+# depends_on = [google_storage_bucket_object.orders]
+# }
+# resource "google_storage_bucket_object" "products" {
+# name         = "products.csv"
+# content_type = "csv"
+# source       = "data/products.csv"
+# bucket       = google_storage_bucket.default.id
+# }
+# 
+# resource "google_bigquery_table" "products" {
+# dataset_id          = google_bigquery_dataset.bq_dataset.dataset_id
+# table_id            = "products"
+# deletion_protection = false
+# 
+# labels = {
+# env = "default"
+# }
+# 
+# external_data_configuration {
+# autodetect = true
+# source_uris = ["gs://${google_storage_bucket.default.name}/${google_storage_bucket_object.products.name}"]
+# source_format = "CSV"
+# }
+# depends_on = [google_storage_bucket_object.products]
+# }
+# resource "google_storage_bucket_object" "users" {
+# name         = "users.csv"
+# content_type = "csv"
+# source       = "data/users.csv"
+# bucket       = google_storage_bucket.default.id
+# }
+# 
+# resource "google_bigquery_table" "users" {
+# dataset_id          = google_bigquery_dataset.bq_dataset.dataset_id
+# table_id            = "users"
+# deletion_protection = false
+# 
+# labels = {
+# env = "default"
+# }
+# 
+# external_data_configuration {
+# autodetect = true
+# source_uris = ["gs://${google_storage_bucket.default.name}/${google_storage_bucket_object.users.name}"]
+# source_format = "CSV"
+# }
+# depends_on = [google_storage_bucket_object.users]
+# }
