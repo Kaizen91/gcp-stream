@@ -7,8 +7,8 @@ terraform {
 }
 
 provider "google" {
-  project = var.project_id
-  region  = var.gcp_region
+  project     = var.project_id
+  region      = var.gcp_region
   credentials = file("event-stream-409218-65ebaf6386c5.json")
 }
 
@@ -26,13 +26,13 @@ resource "google_service_account" "sa" {
 
 resource "google_project_iam_member" "gce_pub_sub_admin" {
   project = var.project_id
-  role = "roles/pubsub.admin"
-  member = "serviceAccount:${data.google_compute_default_service_account.default.email}"
+  role    = "roles/pubsub.admin"
+  member  = "serviceAccount:${data.google_compute_default_service_account.default.email}"
 }
 
 resource "google_service_account" "data_pipeline_access" {
-  project = var.project_id
-  account_id = "retailpipeline-hyp"
+  project      = var.project_id
+  account_id   = "retailpipeline-hyp"
   display_name = "Retail app data pipeline access"
 }
 
@@ -50,7 +50,7 @@ resource "google_project_service" "run" {
 }
 
 resource "google_project_service" "pubsub" {
-  service = "pubsub.googleapis.com"
+  service            = "pubsub.googleapis.com"
   disable_on_destroy = false
 }
 
@@ -61,10 +61,10 @@ resource "google_project_service" "pubsub" {
 
 # BigQuery Dataset
 resource "google_bigquery_dataset" "bq_dataset" {
-  dataset_id                  = "ecommerce_sink"
-  friendly_name               = "ecommerce sink"
-  description                 = "Destination dataset for all pipeline options"
-  location                    = var.gcp_region
+  dataset_id    = "ecommerce_sink"
+  friendly_name = "ecommerce sink"
+  description   = "Destination dataset for all pipeline options"
+  location      = var.gcp_region
 
   delete_contents_on_destroy = true
 
@@ -87,35 +87,6 @@ resource "google_pubsub_topic" "ps_topic" {
 output "pubsub_topic" {
   value = google_pubsub_topic.ps_topic.name
 }
-
-
- # resource "google_pubsub_subscription" "hyp_sub_cloud_run" {
-   # name  = "hyp_subscription_cloud_run"
-   # topic = google_pubsub_topic.ps_topic.name
- # 
-   # labels = {
-     # created = "terraform"
-   # }
- # 
-   # push_config {
-     # push_endpoint = google_cloud_run_service.default.status[0].url
- # 
-     # attributes = {
-       # x-goog-version = "v1"
-     # }
-   # }
- # 
-   # retain_acked_messages      = false
- # 
-   # ack_deadline_seconds = 20
- # 
- # 
-   # retry_policy {
-     # minimum_backoff = "10s"
-   # }
- # 
-   # enable_message_ordering    = false
- # }
 
 resource "google_cloud_run_service_iam_binding" "binding" {
   location = google_cloud_run_v2_service.default.location
@@ -148,7 +119,7 @@ resource "google_pubsub_subscription" "subscription" {
       x-goog-version = "v1"
     }
   }
-   depends_on = [google_cloud_run_v2_service.default]
+  depends_on = [google_cloud_run_v2_service.default]
 }
 
 # Cloud Run
@@ -157,39 +128,23 @@ resource "google_cloud_run_v2_service" "default" {
   location = var.gcp_region
 
   template {
-      containers {
-        image = "gcr.io/${var.project_id}/pubsub"
+    containers {
+      image = "gcr.io/${var.project_id}/pubsub"
     }
   }
 
   # depends_on = [google_project_service.cloudrun_api]
 }
 
-data "google_iam_policy" "noauth" {
-  binding {
-    role = "roles/run.invoker"
-    members = [
-      "allUsers",
-    ]
+resource "google_bigquery_table" "bq_table_cloud_run" {
+  dataset_id          = google_bigquery_dataset.bq_dataset.dataset_id
+  table_id            = "cloud_run"
+  deletion_protection = false
+
+  labels = {
+    env = "default"
   }
+
+  schema = file("bq-table-cloud-run-schema.json")
+
 }
-
- #resource "google_cloud_run_service_iam_policy" "noauth_dp" {
-   #location    = google_cloud_run_service.hyp_run_service_data_processing.location
-   #project     = google_cloud_run_service.hyp_run_service_data_processing.project
-   #service     = google_cloud_run_service.hyp_run_service_data_processing.name
-   #policy_data = data.google_iam_policy.noauth.policy_data
- #}
-
- resource "google_bigquery_table" "bq_table_cloud_run" {
- dataset_id = google_bigquery_dataset.bq_dataset.dataset_id
- table_id   = "cloud_run"
- deletion_protection = false
- 
- labels = {
- env = "default"
- }
- 
- schema = file("bq-table-cloud-run-schema.json") 
- 
- }
