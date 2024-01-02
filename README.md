@@ -5,7 +5,7 @@ An ETL project using GCP (Pub/Sub, Cloud Run, and Bigquery)  to stream simulated
 
 This pipeline starts with a pub/sub topic and push subsricption which pushes messages to a container running on cloud run which performs a simple transformation.  A set up like this is good for when you need to stream data, and only perform simple transformations eg data standardization, or deriving a column.  It is not suitable for more complicated transformations involving multiple rows or aggregations.
 
-![Data flow diagram]()
+![Data flow diagram](https://github.com/Kaizen91/gcp-stream/blob/main/images/Untitled-2023-12-05-1914.excalidraw)
 
 ## Requirements
 
