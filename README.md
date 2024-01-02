@@ -46,4 +46,4 @@ This pipeline starts with a pub/sub topic and push subsricption which pushes mes
 ## Supporting links
 
 * [Documentation on using Cloud Run with Pub/Sub](https://cloud.google.com/run/docs/tutorials/pubsub?skip_cache=true#run_pubsub_server-python)
-* [article that inspired this build] (https://cloud.google.com/blog/products/data-analytics/building-streaming-data-pipelines)
+* [article that inspired this build](https://cloud.google.com/blog/products/data-analytics/building-streaming-data-pipelines)
